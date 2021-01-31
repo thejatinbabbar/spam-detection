@@ -99,32 +99,20 @@ def get_feature_groups(data):
 
     return groups
 
-def get_train_and_val_set(data_path, return_full_set=False):
+def get_train_and_test_set(data_path):
     """
-    Split the dataset into train set, validation set, and test set for each feature group
+    Split the dataset into train set and test set for each feature group
     """
     data = get_clean_data(data_path)
     groups = get_feature_groups(data)
 
     train_set = []
-    train_val_set = []
+    test_set = []
     for columns in groups:
 
         train = data[columns][data.label.notnull()].copy()
-        train_set.append(train)
         test = data[columns][data.label.isnull()].copy()
-        train, val = train_test_split(train, test_size=86, random_state=101)
+        train_set.append(train)
+        test_set.append(test)
 
-        X_train, y_train = train.drop('label', axis=1), train['label']
-        X_val, y_val = val.drop('label', axis=1), val['label']
-
-        train_val_set.append((X_train, y_train, X_val, y_val))
-
-    if return_full_set:
-        return train_val_set, train_set
-    else:
-        return train_val_set
-
-if __name__ == '__main__':
-    data_path = '/content/drive/MyDrive/data_mining/Social_spammers_dataset'
-    t_v_set = get_train_and_val_set(data_path)
+    return train_set, test_set
