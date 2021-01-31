@@ -2,8 +2,9 @@
 import os
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 from sklearn.model_selection import train_test_split
+from sklearn.feature_selection import SelectKBest, chi2
 
 def import_files(data_path):
     """
@@ -59,30 +60,42 @@ def get_clean_data(data_path):
 
 def get_feature_groups(data):
     """
-    Create 3 different feature groups based on the correlation score with the target variable
+    Create different feature groups based on the correlation score with the target variable
 
     1. all columns
     2. columns with correlation score > 0.2
     3. columns with correlation score > 0.3
+    4. top 30 columns with chi square score
     """
     groups = []
     groups.append(data.columns)
     groups.append(data.corr()[data.corr().label.abs() > 0.2].label.index.values)
     groups.append(data.corr()[data.corr().label.abs() > 0.3].label.index.values)
+    
+    scaler = MinMaxScaler()
+    data_new = scaler.fit_transform(data[data.label.notnull()].drop('label', axis=1))
+    selector = SelectKBest(chi2, k=30)
+    selector.fit(data_new, data[data.label.notnull()]['label'])
+    indices =[i for i, x in enumerate(selector.get_support()) if x]
+    group = [data.columns[i] for i in indices]
+    group.append('label')
+    groups.append(group)
 
     return groups
 
-def get_train_and_val_set(data_path):
+def get_train_and_val_set(data_path, return_full_set=False):
     """
     Split the dataset into train set, validation set, and test set for each feature group
     """
     data = get_clean_data(data_path)
     groups = get_feature_groups(data)
 
+    train_set = []
     train_val_set = []
     for columns in groups:
 
         train = data[columns][data.label.notnull()].copy()
+        train_set.append(train)
         test = data[columns][data.label.isnull()].copy()
         train, val = train_test_split(train, test_size=86, random_state=101)
 
@@ -91,4 +104,11 @@ def get_train_and_val_set(data_path):
 
         train_val_set.append((X_train, y_train, X_val, y_val))
 
-    return train_val_set
+    if return_full_set:
+        return train_val_set, train_set
+    else:
+        return train_val_set
+
+if __name__ == '__main__':
+    data_path = '/content/drive/MyDrive/data_mining/Social_spammers_dataset'
+    t_v_set = get_train_and_val_set(data_path)
