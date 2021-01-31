@@ -7,7 +7,10 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.model_selection import cross_val_score, ShuffleSplit
 
 def get_crossval_scores(data_path, to_print=False):
-
+    """
+    Perform cross validation on the dataset and fit on different models
+    """
+    
     models = [DecisionTreeClassifier(),
             RandomForestClassifier(),
             GradientBoostingClassifier()]
