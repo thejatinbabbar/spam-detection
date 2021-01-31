@@ -66,6 +66,8 @@ def get_feature_groups(data):
     2. columns with correlation score > 0.2
     3. columns with correlation score > 0.3
     4. top 30 columns with chi square score
+    5. top 50 columns with chi square score
+    6. top 80 columns with chi square score
     """
     groups = []
     groups.append(data.columns)
@@ -75,6 +77,20 @@ def get_feature_groups(data):
     scaler = MinMaxScaler()
     data_new = scaler.fit_transform(data[data.label.notnull()].drop('label', axis=1))
     selector = SelectKBest(chi2, k=30)
+    selector.fit(data_new, data[data.label.notnull()]['label'])
+    indices =[i for i, x in enumerate(selector.get_support()) if x]
+    group = [data.columns[i] for i in indices]
+    group.append('label')
+    groups.append(group)
+
+    selector = SelectKBest(chi2, k=50)
+    selector.fit(data_new, data[data.label.notnull()]['label'])
+    indices =[i for i, x in enumerate(selector.get_support()) if x]
+    group = [data.columns[i] for i in indices]
+    group.append('label')
+    groups.append(group)
+
+    selector = SelectKBest(chi2, k=80)
     selector.fit(data_new, data[data.label.notnull()]['label'])
     indices =[i for i, x in enumerate(selector.get_support()) if x]
     group = [data.columns[i] for i in indices]
